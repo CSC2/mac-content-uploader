@@ -1,35 +1,46 @@
+/*
+ * This scripts expects a csv file to be placed in the Resources dir.  It will read columns as dicatated by the code below.
+ * Then it will update the values of each project in ACS.
+ */
+
 var Cloud = require('ti.cloud');
 
-var user = "pbryzek";
-var password = "PaulBryz1984!";
-var filename = "test.txt";
+var user = "csc";
+var password = "1234";
+var filename = "projects.tsv";
 
 var projectIdCol = 0;
 var collectionIdCol = 1;
 var industryIdCol = 2;
 var videosCol = 3;
-var nameCol = 4;
-var descriptionCol = 5;
-var featuredCol = 6;
+var appUrlAndroidCol = 4;
+var appUrliOSCol = 5;
+var nameCol = 6;
+var descriptionCol = 7;
+var featuredCol = 8;
+var tagsCol = 9;
 
-function updateProject(projectid, fields) {
+var endCol = tagsCol;
+
+function updateProject(projectid, fields, tags) {
 	Cloud.Objects.update({
 		classname : 'projects',
 		id : projectid,
+		//tags : tags,
 		fields : fields
 	}, function(e) {
 		if (e.success) {
 			var project = e.projects[0];
-			alert('Success:\n' + 'id: ' + project.id + '\n' + 'updated_at: ' + project.updated_at);
+			Ti.API.info('Success:\n' + 'id: ' + project.id + '\n' + 'updated_at: ' + project.updated_at);
 		} else {
-			alert('Error:\n' + ((e.error && e.message) || JSON.stringify(e)));
+			Ti.API.info('Error:\n' + ((e.error && e.message) || JSON.stringify(e)));
 		}
 	});
 }
 
-function displayDialog(projectId, fields) {
+function displayDialog(projectId, fields, tags) {
 	Ti.UI.setBackgroundColor('white');
-	var dialogMsg = "Update project:" + projectId + " with the following: " + JSON.stringify(fields);
+	var dialogMsg = "Update project:" + projectId + " with tags:" + JSON.stringify(tags) + " and fields: " + JSON.stringify(fields);
 	var dialog = Ti.UI.createAlertDialog({
 		cancel : 1,
 		buttonNames : ['Confirm', "Cancel"],
@@ -41,7 +52,7 @@ function displayDialog(projectId, fields) {
 		if (indexClick === e.source.cancel) {
 			Ti.API.info('The cancel button was clicked');
 		} else if (indexClick === 0) {
-			//updateProject(projectId, fields);
+			updateProject(projectId, fields, tags);
 		}
 	});
 	dialog.show();
@@ -57,32 +68,16 @@ function isEmpty(map) {
 }
 
 function readCsv(projectIds) {
-	//var f = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory,'Resources','route.csv');
-	//var csv = f.read();
-
 	var csv = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, filename);
 
 	if (!csv.exists()) {
 		alert("did not find file");
 	} else {
-		//var csvContents = csv.read();
-		//var csvArray = csvContents.split(',');
-		var csvArray = [];
-		csvArray.push("1");
-		csvArray.push("2");
-		csvArray.push("3");
-		csvArray.push("4");
-		csvArray.push("5");
-		csvArray.push("6");
-		csvArray.push("7");
-		
-		csvArray.push("8");
-		csvArray.push("9");
-		csvArray.push("10");
-		csvArray.push("11");
-		csvArray.push("12");
-		csvArray.push("13");
-		csvArray.push("14");
+		var delimiter = "\t";
+		var csvContents = csv.read().text;
+		//Remove
+		csvContents = csvContents.replace(/(\r\n|\n|\r)/gm, delimiter);
+		var csvArray = csvContents.split(delimiter);
 
 		var j = 0;
 		var projectId = null;
@@ -92,13 +87,16 @@ function readCsv(projectIds) {
 		var name = null;
 		var description = null;
 		var featured = null;
+		var tags = null;
+		var appUrlAndroid = null;
+		var appUrliOS = null;
 
+		var first = true;
 		for (var i = 0; i < csvArray.length; i++) {
 			var value = csvArray[i];
 
 			if (j == projectIdCol) {
 				projectId = value;
-				projectId = "52b484ffb29dc80b660002a4";
 			} else if (j == collectionIdCol) {
 				collectionId = value;
 			} else if (j == industryIdCol) {
@@ -111,6 +109,20 @@ function readCsv(projectIds) {
 				description = value;
 			} else if (j == featuredCol) {
 				featured = value;
+			} else if (j == tagsCol) {
+				tags = value;
+			} else if (j == appUrlAndroidCol) {
+				appUrlAndroid = value;
+			} else if (j == appUrliOSCol) {
+				appUrliOS = value;
+			}
+			if (j == endCol) {
+				//Skip the header
+				if (first) {
+					first = false;
+					j = 0;
+					continue;
+				}
 				j = -1;
 				if (!projectId) {
 					alert("project id can't be null");
@@ -128,34 +140,39 @@ function readCsv(projectIds) {
 					break;
 				}
 				var fields = {};
-				if (!collectionId) {
+				if (collectionId) {
 					fields["collection_id"] = collectionId;
 				}
-				if (!industryId) {
+				if (industryId) {
 					fields["industry_id"] = industryId;
 				}
-				if (!videos) {
+				if (videos) {
 					fields["videos"] = videos;
 				}
-				if (!name) {
+				if (name) {
 					fields["name"] = name;
 				}
-				if (!description) {
+				if (description) {
 					fields["description"] = description;
 				}
-				if (!featured) {
+				if (featured) {
 					var boolVal = false;
 					if (featured == 1) {
 						boolVal = true;
 					}
 					fields["featured"] = boolVal;
 				}
-				fields["description"] = 'description';
+				if (appUrliOS) {
+					fields["app_url_ios"] = appUrliOS;
+				}
+				if (appUrlAndroid) {
+					fields["app_url_android"] = appUrlAndroid;
+				}
 				if (isEmpty(fields)) {
 					alert("Cant have an empty dict for projectId " + projectId);
 					break;
 				}
-				displayDialog(projectId, fields);
+				displayDialog(projectId, fields, tags);
 
 				Ti.API.info('looping');
 
@@ -166,7 +183,9 @@ function readCsv(projectIds) {
 				name = null;
 				description = null;
 				featured = null;
-
+				tags = null;
+				appUrlAndroid = null;
+				appUrliOS = null;
 			}
 			j++;
 		}
