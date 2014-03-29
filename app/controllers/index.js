@@ -19,8 +19,12 @@ var nameCol = 6;
 var descriptionCol = 7;
 var featuredCol = 8;
 var tagsCol = 9;
+var publishCol = 10;
+var dateAddedCol = 11;
+var dateUpdatedCol = 12;
+var contactCol = 13;
 
-var endCol = tagsCol;
+var endCol = contactCol;
 
 function updateProject(projectid, fields, tags) {
 	Cloud.Objects.update({
@@ -90,6 +94,10 @@ function readCsv(projectIds) {
 		var tags = null;
 		var appUrlAndroid = null;
 		var appUrliOS = null;
+		var publish = null;
+		var dateAdded = null;
+		var dateUpdated = null;
+		var contact = null;
 
 		var first = true;
 		for (var i = 0; i < csvArray.length; i++) {
@@ -115,6 +123,14 @@ function readCsv(projectIds) {
 				appUrlAndroid = value;
 			} else if (j == appUrliOSCol) {
 				appUrliOS = value;
+			} else if (j == publishCol) {
+				publish = value;
+			} else if (j == dateAddedCol) {
+				dateAdded = value;
+			} else if (j == dateUpdatedCol) {
+				dateUpdated = value;
+			} else if (j == contactCol) {
+				contact = value;
 			}
 			if (j == endCol) {
 				//Skip the header
@@ -162,11 +178,23 @@ function readCsv(projectIds) {
 					}
 					fields["featured"] = boolVal;
 				}
+				if (publish) {
+					fields["publish"] = publish;
+				}
 				if (appUrliOS) {
 					fields["app_url_ios"] = appUrliOS;
 				}
 				if (appUrlAndroid) {
 					fields["app_url_android"] = appUrlAndroid;
+				}
+				if (dateUpdated) {
+					fields["date_updated"] = dateUpdated;
+				}
+				if (contact) {
+					fields["contact"] = contact;
+				}
+				if (dateAdded) {
+					fields["date_added"] = dateAdded;
 				}
 				if (isEmpty(fields)) {
 					alert("Cant have an empty dict for projectId " + projectId);
@@ -186,6 +214,10 @@ function readCsv(projectIds) {
 				tags = null;
 				appUrlAndroid = null;
 				appUrliOS = null;
+				publish = null;
+				dateAdded = null;
+				dateUpdated = null;
+				contact = null;
 			}
 			j++;
 		}
