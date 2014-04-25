@@ -79,7 +79,7 @@ function readCsv(projectIds) {
 	} else {
 		var delimiter = "\t";
 		var csvContents = csv.read().text;
-		//Remove
+		
 		csvContents = csvContents.replace(/(\r\n|\n|\r)/gm, delimiter);
 		var csvArray = csvContents.split(delimiter);
 
